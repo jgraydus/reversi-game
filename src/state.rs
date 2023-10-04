@@ -13,10 +13,11 @@ impl Color {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct GameState {
     positions: [Color; 64],
     current_player: Color,
+    all_lines: HashMap<Pos, Vec<Vec<Pos>>>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
@@ -27,11 +28,13 @@ impl GameState {
         let mut game_state = GameState {
             positions: [Color::Empty; 64],
             current_player: Color::Black,
+            all_lines: HashMap::new(),
         };
         game_state.set_position(Pos { row: 3, col: 3 }, Color::White);
         game_state.set_position(Pos { row: 3, col: 4 }, Color::Black);
         game_state.set_position(Pos { row: 4, col: 3 }, Color::Black);
         game_state.set_position(Pos { row: 4, col: 4 }, Color::White);
+        game_state.all_lines = compute_all_lines(&game_state);
         game_state
     }
   
@@ -52,11 +55,14 @@ impl GameState {
     pub fn set_current_player(&mut self, value: Color) {
         self.current_player = value;
     }
+
+    pub fn get_all_lines(&self) -> &HashMap<Pos,Vec<Vec<Pos>>> {
+        &self.all_lines
+    }
 }
 
 pub fn apply(game_state: &mut GameState,
-             pos: Option<Pos>,
-             all_lines: &HashMap<Pos, Vec<Vec<Pos>>>
+             pos: Option<Pos>
 ) -> Option<()> {
     let color = game_state.get_current_player();
 
@@ -65,7 +71,7 @@ pub fn apply(game_state: &mut GameState,
     if let Some(pos) = pos {
         if game_state.get_position(pos) != Color::Empty { return None; }
 
-        if let Some(lines) = all_lines.get(&pos) {
+        if let Some(lines) = game_state.all_lines.clone().get(&pos) {
             game_state.set_position(pos, color);
             for line in lines {
                for p in line {
@@ -78,6 +84,7 @@ pub fn apply(game_state: &mut GameState,
     }
 
     game_state.set_current_player(color.opposite());
+    game_state.all_lines = compute_all_lines(game_state);
 
     Some(())
 }

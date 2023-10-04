@@ -1,6 +1,5 @@
 use futures::channel::mpsc::channel;
 use futures::stream::StreamExt;
-use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures;
@@ -57,33 +56,16 @@ pub fn main_js() -> Result<(), JsValue> {
         canvas.set_onclick(Some(click_handler.as_ref().unchecked_ref()));
         click_handler.forget();
 
-        // the currently available moves
-        let mut lines: HashMap<Pos, Vec<Vec<Pos>>>
-           = compute_all_lines(&game_state);
-
         // process each received click
         while let Some((x, y)) = r.next().await {
-          /*
-          let msg = format!("lines: {:?}", lines);
-          web_sys::console::log_1(&msg.into());
-          let msg = format!("len: {}", lines.len());
-          web_sys::console::log_1(&msg.into());
-          let msg = format!("x: {}, y: {}", x, y);
-          web_sys::console::log_1(&msg.into());
-          */
-
           // if the user clicks the 'pass' button
-          if lines.is_empty()
+          if game_state.get_all_lines().is_empty()
              && x > SIZE as i32 + 50
              && x < SIZE as i32 + 150
              && y > 400
              && y < 440 {
-              apply(&mut game_state, None, &lines);
-        
+              apply(&mut game_state, None);
               render_board(&context, SIZE as f64, &game_state);
-
-              lines = compute_all_lines(&game_state);
-              if lines.is_empty() { render_pass_button(&context, SIZE as f64); }
               continue;
           }
 
@@ -98,13 +80,9 @@ pub fn main_js() -> Result<(), JsValue> {
               col: (x as f64 / SIZE as f64 * 8.0).floor() as usize,
           };
 
-          if let Some(_) = apply(&mut game_state, Some(pos), &lines) {
+          if let Some(_) = apply(&mut game_state, Some(pos)) {
               render_board(&context, SIZE as f64, &game_state);
-
-              lines = compute_all_lines(&game_state);
           }
-
-          if lines.is_empty() { render_pass_button(&context, SIZE as f64); }
         }
     });
 

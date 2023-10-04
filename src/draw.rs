@@ -86,6 +86,10 @@ pub fn render_board(
     } else {
         context.fill_text("WHITE's turn", size+10.0, 175.0).unwrap();
     }
+
+    if game_state.get_all_lines().is_empty() {
+        render_pass_button(&context, size as f64);
+    }
 }
 
 pub fn render_pass_button(
