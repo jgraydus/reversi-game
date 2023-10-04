@@ -18,6 +18,7 @@ pub struct GameState {
     positions: [Color; 64],
     current_player: Color,
     all_lines: HashMap<Pos, Vec<Vec<Pos>>>,
+    passes: usize,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
@@ -29,13 +30,29 @@ impl GameState {
             positions: [Color::Empty; 64],
             current_player: Color::Black,
             all_lines: HashMap::new(),
+            passes: 0,
         };
-        game_state.set_position(Pos { row: 3, col: 3 }, Color::White);
-        game_state.set_position(Pos { row: 3, col: 4 }, Color::Black);
-        game_state.set_position(Pos { row: 4, col: 3 }, Color::Black);
-        game_state.set_position(Pos { row: 4, col: 4 }, Color::White);
-        game_state.all_lines = compute_all_lines(&game_state);
+        game_state.reset();
         game_state
+   }
+
+    pub fn reset(&mut self) {
+        self.positions = [Color::Empty; 64];
+        self.set_position(Pos { row: 3, col: 3 }, Color::White);
+        self.set_position(Pos { row: 3, col: 4 }, Color::Black);
+        self.set_position(Pos { row: 4, col: 3 }, Color::Black);
+        self.set_position(Pos { row: 4, col: 4 }, Color::White);
+        self.current_player = Color::Black;
+        self.all_lines = compute_all_lines(&self);
+        self.passes = 0;
+    }
+
+    pub fn is_game_over(&self) -> bool {
+        if self.passes == 2 { return true; }
+        for v in self.positions {
+            if v == Color::Empty { return false; }
+        }
+        true
     }
   
     pub fn get_position(&self, pos: Pos) -> Color {
@@ -78,9 +95,12 @@ pub fn apply(game_state: &mut GameState,
                    game_state.set_position(*p, color);
                }
             }
+            game_state.passes = 0;
         } else {
             return None;
         }
+    } else {
+        game_state.passes = game_state.passes + 1;
     }
 
     game_state.set_current_player(color.opposite());

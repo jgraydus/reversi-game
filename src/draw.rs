@@ -3,12 +3,21 @@ use web_sys;
 
 use crate::state::*;
 
-pub fn render_board(
+// draw the game to the canvas
+pub fn draw(
   context: &web_sys::CanvasRenderingContext2d,
   size: f64,
   game_state: &GameState
 ) {
-    // clear
+   clear(context, size);
+   draw_game_board(context, size);
+   draw_placed_pieces(context, size, game_state);
+   draw_side_panel(context, size, game_state);
+}
+
+// clear the current content by drawing a white rectangle
+// over the entire canvas
+fn clear(context: &web_sys::CanvasRenderingContext2d, size: f64) {
     context.begin_path();
     context.set_fill_style(&JsValue::from_str("white"));
     context.move_to(0.0, 0.0);
@@ -17,7 +26,9 @@ pub fn render_board(
     context.line_to(0.0, size);
     context.line_to(0.0, 0.0);
     context.fill();
+}
 
+fn draw_game_board(context: &web_sys::CanvasRenderingContext2d, size: f64) {
     // draw green background
     context.begin_path();
     context.set_line_width(3.0);
@@ -42,57 +53,71 @@ pub fn render_board(
         context.line_to(size, y);
     }
     context.stroke();
+}
 
-    // draw the placed pieces
+fn draw_placed_pieces(context: &web_sys::CanvasRenderingContext2d,
+                      size: f64,
+                      game_state: &GameState) {
     for row in 0..8 {
-       for col in 0..8 {
-           let value = game_state.get_position(Pos { row, col });
-           if value == Color::Black || value == Color::White {
-               context.begin_path();
-               if value == Color::Black {
-                   context.set_fill_style(&JsValue::from_str("black"));
-               } else {
-                   context.set_fill_style(&JsValue::from_str("white"));
-               }
-               let x = size / 16.0 + col as f64 * size / 8.0;
-               let y = size / 16.0 + row as f64 * size / 8.0;
-               let r = size / 16.0 - 5.0;
-               context.arc(x, y, r, 0.0, 2.0 * 3.141592).unwrap();
-               context.fill();
+        for col in 0..8 {
+            let color = game_state.get_position(Pos { row, col });
+            if color == Color::Black || color == Color::White {
+                draw_piece(context, size, Pos { row, col }, color);
             }
         }
     }
+}
 
-    // draw a piece to show who's turn it is
+fn draw_piece(context: &web_sys::CanvasRenderingContext2d,
+              size: f64,
+              pos: Pos,
+              color: Color) {
     context.begin_path();
-    context.set_line_width(1.0);
-    if game_state.get_current_player() == Color::Black {
-        context.set_fill_style(&JsValue::from_str("black"));
-    } else {
-        context.set_fill_style(&JsValue::from_str("white"));
-    }
-    let x = size + 100.0;
-    let y = 100.0;
+    let s = if color == Color::Black { "black" } else { "white" };
+    context.set_fill_style(&JsValue::from_str(s));
+    let Pos { row, col } = pos;
+    let x = size / 16.0 + col as f64 * size / 8.0;
+    let y = size / 16.0 + row as f64 * size / 8.0;
     let r = size / 16.0 - 5.0;
     context.arc(x, y, r, 0.0, 2.0 * 3.141592).unwrap();
     context.fill();
-    context.stroke();
+}
 
-    // write text to say whose turn it is
-    context.set_font("24pt sans-serif");
-    context.set_fill_style(&JsValue::from_str("black"));
-    if game_state.get_current_player() == Color::Black {
-        context.fill_text("BLACK's turn", size+10.0, 175.0).unwrap();
+fn draw_side_panel(context: &web_sys::CanvasRenderingContext2d,
+                   size: f64,
+                   game_state: &GameState) {
+    if game_state.is_game_over() {
+        // TODO
     } else {
-        context.fill_text("WHITE's turn", size+10.0, 175.0).unwrap();
-    }
+        // draw a piece to show who's turn it is
+        context.begin_path();
+        context.set_line_width(1.0);
+        let color = game_state.get_current_player();
+        let s = if color == Color::Black { "black" } else { "white" };
+        context.set_fill_style(&JsValue::from_str(s));
+        let x = size + 100.0;
+        let y = 100.0;
+        let r = size / 16.0 - 5.0;
+        context.arc(x, y, r, 0.0, 2.0 * 3.141592).unwrap();
+        context.fill();
+        context.stroke();
 
-    if game_state.get_all_lines().is_empty() {
-        render_pass_button(&context, size as f64);
+        // write text to say whose turn it is
+        context.set_font("24pt sans-serif");
+        context.set_fill_style(&JsValue::from_str("black"));
+        if game_state.get_current_player() == Color::Black {
+            context.fill_text("BLACK's turn", size+10.0, 175.0).unwrap();
+        } else {
+            context.fill_text("WHITE's turn", size+10.0, 175.0).unwrap();
+        }
+
+        if game_state.get_all_lines().is_empty() {
+            render_pass_button(&context, size as f64);
+        }
     }
 }
 
-pub fn render_pass_button(
+fn render_pass_button(
   context: &web_sys::CanvasRenderingContext2d,
   size: f64) {
     // draw the pass button if there are no moves available
