@@ -3,6 +3,16 @@ use std::collections::HashMap;
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Color { Empty, Black, White }
 
+impl Color {
+    pub fn opposite(&self) -> Color {
+        match self {
+            Color::Empty => Color::Empty,
+            Color::Black => Color::White,
+            Color::White => Color::Black,
+        }
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct GameState {
     positions: [Color; 64],
@@ -45,23 +55,31 @@ impl GameState {
 }
 
 pub fn apply(game_state: &mut GameState,
-         pos: Pos,
-         color: Color,
-         all_lines: &HashMap<Pos, Vec<Vec<Pos>>>
+             pos: Option<Pos>,
+             all_lines: &HashMap<Pos, Vec<Vec<Pos>>>
 ) -> Option<()> {
-    if game_state.get_position(pos) != Color::Empty { return None; }
+    let color = game_state.get_current_player();
 
-    if let Some(lines) = all_lines.get(&pos) {
-        game_state.set_position(pos, color);
-        for line in lines {
-           for Pos { row: r, col: c } in line {
-               game_state.set_position(Pos { row: *r, col: *c }, color);
-           }
+    // if we're given a position, try to have the current player place
+    // a piece there
+    if let Some(pos) = pos {
+        if game_state.get_position(pos) != Color::Empty { return None; }
+
+        if let Some(lines) = all_lines.get(&pos) {
+            game_state.set_position(pos, color);
+            for line in lines {
+               for p in line {
+                   game_state.set_position(*p, color);
+               }
+            }
+        } else {
+            return None;
         }
-        return Some(())
     }
 
-    None
+    game_state.set_current_player(color.opposite());
+
+    Some(())
 }
 
 pub fn compute_all_lines(

@@ -78,14 +78,10 @@ pub fn main_js() -> Result<(), JsValue> {
              && x < SIZE as i32 + 150
              && y > 400
              && y < 440 {
-              web_sys::console::log_1(&"HERE".into());
-              game_state.set_current_player(
-                  if game_state.get_current_player() == Color::Black { Color::White }
-                  else { Color::Black });
+              apply(&mut game_state, None, &lines);
         
-              render_board(&context,
-                           SIZE as f64,
-                           &game_state);
+              render_board(&context, SIZE as f64, &game_state);
+
               lines = compute_all_lines(&game_state);
               if lines.is_empty() { render_pass_button(&context, SIZE as f64); }
               continue;
@@ -96,18 +92,15 @@ pub fn main_js() -> Result<(), JsValue> {
               continue;
           }
 
-          let col = (x as f64 / SIZE as f64 * 8.0).floor() as usize;
-          let row = (y as f64 / SIZE as f64 * 8.0).floor() as usize;
+          // convert the clicked position into the board square coord
+          let pos = Pos {
+              row: (y as f64 / SIZE as f64 * 8.0).floor() as usize,
+              col: (x as f64 / SIZE as f64 * 8.0).floor() as usize,
+          };
 
-          let color = game_state.get_current_player();
+          if let Some(_) = apply(&mut game_state, Some(pos), &lines) {
+              render_board(&context, SIZE as f64, &game_state);
 
-          if let Some(_) = apply(&mut game_state, Pos {row, col}, color, &lines) {
-              game_state.set_current_player(
-                  if color == Color::Black { Color::White }
-                  else { Color::Black });
-              render_board(&context,
-                           SIZE as f64,
-                           &game_state);
               lines = compute_all_lines(&game_state);
           }
 
