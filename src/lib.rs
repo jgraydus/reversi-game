@@ -58,7 +58,7 @@ pub fn main_js() -> Result<(), JsValue> {
         click_handler.forget();
 
         // the currently available moves
-        let mut lines: HashMap<(usize,usize), Vec<Vec<(usize,usize)>>>
+        let mut lines: HashMap<Pos, Vec<Vec<Pos>>>
            = compute_all_lines(&game_state);
 
         // process each received click
@@ -101,7 +101,7 @@ pub fn main_js() -> Result<(), JsValue> {
 
           let color = game_state.get_current_player();
 
-          if let Some(_) = apply(&mut game_state, row, col, color, &lines) {
+          if let Some(_) = apply(&mut game_state, Pos {row, col}, color, &lines) {
               game_state.set_current_player(
                   if color == Color::Black { Color::White }
                   else { Color::Black });

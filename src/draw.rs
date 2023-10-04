@@ -46,7 +46,7 @@ pub fn render_board(
     // draw the placed pieces
     for row in 0..8 {
        for col in 0..8 {
-           let value = game_state.get_position(row, col);
+           let value = game_state.get_position(Pos { row, col });
            if value == Color::Black || value == Color::White {
                context.begin_path();
                if value == Color::Black {
