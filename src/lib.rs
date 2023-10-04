@@ -44,7 +44,7 @@ pub fn main_js() -> Result<(), JsValue> {
         let mut game_state = GameState::new();
    
         // do the initial render 
-        render_board(&context, SIZE as f64, &game_state, BLACK);
+        render_board(&context, SIZE as f64, &game_state);
     
         // channel to pass click events
         let (mut s, mut r) = channel::<(i32,i32)>(10);
@@ -57,21 +57,20 @@ pub fn main_js() -> Result<(), JsValue> {
         canvas.set_onclick(Some(click_handler.as_ref().unchecked_ref()));
         click_handler.forget();
 
-        // the color of the current player
-        let mut color = BLACK;
-
         // the currently available moves
         let mut lines: HashMap<(usize,usize), Vec<Vec<(usize,usize)>>>
-           = compute_all_lines(&game_state, color);
+           = compute_all_lines(&game_state);
 
         // process each received click
         while let Some((x, y)) = r.next().await {
+          /*
           let msg = format!("lines: {:?}", lines);
           web_sys::console::log_1(&msg.into());
           let msg = format!("len: {}", lines.len());
           web_sys::console::log_1(&msg.into());
           let msg = format!("x: {}, y: {}", x, y);
           web_sys::console::log_1(&msg.into());
+          */
 
           // if the user clicks the 'pass' button
           if lines.is_empty()
@@ -80,12 +79,14 @@ pub fn main_js() -> Result<(), JsValue> {
              && y > 400
              && y < 440 {
               web_sys::console::log_1(&"HERE".into());
-              color = if color == BLACK { WHITE } else { BLACK };
+              game_state.set_current_player(
+                  if game_state.get_current_player() == Color::Black { Color::White }
+                  else { Color::Black });
+        
               render_board(&context,
                            SIZE as f64,
-                           &game_state,
-                           color);
-              lines = compute_all_lines(&game_state, color);
+                           &game_state);
+              lines = compute_all_lines(&game_state);
               if lines.is_empty() { render_pass_button(&context, SIZE as f64); }
               continue;
           }
@@ -98,13 +99,16 @@ pub fn main_js() -> Result<(), JsValue> {
           let col = (x as f64 / SIZE as f64 * 8.0).floor() as usize;
           let row = (y as f64 / SIZE as f64 * 8.0).floor() as usize;
 
+          let color = game_state.get_current_player();
+
           if let Some(_) = apply(&mut game_state, row, col, color, &lines) {
-              color = if color == BLACK { WHITE } else { BLACK };
+              game_state.set_current_player(
+                  if color == Color::Black { Color::White }
+                  else { Color::Black });
               render_board(&context,
                            SIZE as f64,
-                           &game_state,
-                           color);
-              lines = compute_all_lines(&game_state, color);
+                           &game_state);
+              lines = compute_all_lines(&game_state);
           }
 
           if lines.is_empty() { render_pass_button(&context, SIZE as f64); }

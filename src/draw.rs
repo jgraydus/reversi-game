@@ -6,8 +6,7 @@ use crate::state::*;
 pub fn render_board(
   context: &web_sys::CanvasRenderingContext2d,
   size: f64,
-  game_state: &GameState,
-  color: u8
+  game_state: &GameState
 ) {
     // clear
     context.begin_path();
@@ -48,9 +47,9 @@ pub fn render_board(
     for row in 0..8 {
        for col in 0..8 {
            let value = game_state.get_position(row, col);
-           if value == BLACK || value == WHITE {
+           if value == Color::Black || value == Color::White {
                context.begin_path();
-               if value == BLACK {
+               if value == Color::Black {
                    context.set_fill_style(&JsValue::from_str("black"));
                } else {
                    context.set_fill_style(&JsValue::from_str("white"));
@@ -67,7 +66,7 @@ pub fn render_board(
     // draw a piece to show who's turn it is
     context.begin_path();
     context.set_line_width(1.0);
-    if color == BLACK {
+    if game_state.get_current_player() == Color::Black {
         context.set_fill_style(&JsValue::from_str("black"));
     } else {
         context.set_fill_style(&JsValue::from_str("white"));
@@ -82,7 +81,7 @@ pub fn render_board(
     // write text to say whose turn it is
     context.set_font("24pt sans-serif");
     context.set_fill_style(&JsValue::from_str("black"));
-    if color == BLACK {
+    if game_state.get_current_player() == Color::Black {
         context.fill_text("BLACK's turn", size+10.0, 175.0).unwrap();
     } else {
         context.fill_text("WHITE's turn", size+10.0, 175.0).unwrap();
