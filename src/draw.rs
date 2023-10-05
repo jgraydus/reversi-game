@@ -87,7 +87,7 @@ fn draw_side_panel(context: &web_sys::CanvasRenderingContext2d,
                    size: f64,
                    game_state: &GameState) {
     if game_state.is_game_over() {
-        // TODO
+        draw_game_over(context, size, game_state);
     } else {
         // draw a piece to show who's turn it is
         context.begin_path();
@@ -96,7 +96,7 @@ fn draw_side_panel(context: &web_sys::CanvasRenderingContext2d,
         let s = if color == Color::Black { "black" } else { "white" };
         context.set_fill_style(&JsValue::from_str(s));
         let x = size + 100.0;
-        let y = 100.0;
+        let y = 50.0;
         let r = size / 16.0 - 5.0;
         context.arc(x, y, r, 0.0, 2.0 * 3.141592).unwrap();
         context.fill();
@@ -106,15 +106,56 @@ fn draw_side_panel(context: &web_sys::CanvasRenderingContext2d,
         context.set_font("24pt sans-serif");
         context.set_fill_style(&JsValue::from_str("black"));
         if game_state.get_current_player() == Color::Black {
-            context.fill_text("BLACK's turn", size+10.0, 175.0).unwrap();
+            context.fill_text("BLACK's turn", size+10.0, 125.0).unwrap();
         } else {
-            context.fill_text("WHITE's turn", size+10.0, 175.0).unwrap();
+            context.fill_text("WHITE's turn", size+10.0, 125.0).unwrap();
         }
 
         if game_state.get_all_lines().is_empty() {
             render_pass_button(&context, size as f64);
         }
     }
+}
+
+fn draw_game_over(context: &web_sys::CanvasRenderingContext2d,
+                  size: f64,
+                  game_state: &GameState) {
+    context.set_fill_style(&JsValue::from_str("black"));
+    context.set_font("36pt sans-serif");
+    context.fill_text("GAME", size+20.0, 50.0).unwrap();
+    context.fill_text("OVER", size+20.0, 100.0).unwrap();
+
+    let mut black = 0;
+    let mut white = 0;
+    for row in 0..8 {
+        for col in 0..8 {
+            let color = game_state.get_position(Pos { row, col });
+            if color == Color::Black { black = black + 1; }
+            if color == Color::White { white = white + 1; }
+        }
+    }
+
+    context.set_font("24pt sans-serif");
+    context.fill_text(&format!("black: {}", black),
+                      size + 20.0, 150.0).unwrap();
+    context.fill_text(&format!("white: {}", white),
+                      size + 20.0, 180.0).unwrap();
+
+    // draw reset button
+    context.begin_path();
+    let x = size+50.0;
+    let y = 400.0;
+    context.move_to(x,y);
+    context.line_to(x,y+40.0);
+    context.line_to(x+100.0,y+40.0);
+    context.line_to(x+100.0,y);
+    context.line_to(x,y);
+    context.set_fill_style(&JsValue::from_str("red"));
+    context.fill();
+    context.stroke();
+    context.set_font("20pt sans-serif");
+    context.set_fill_style(&JsValue::from_str("black"));
+    context.fill_text("RESET", x+5.0, y+30.0).unwrap();
 }
 
 fn render_pass_button(

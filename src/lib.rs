@@ -58,6 +58,17 @@ pub fn main_js() -> Result<(), JsValue> {
 
         // process each received click
         while let Some((x, y)) = r.next().await {
+            // if the user clicks the 'reset' button
+            if game_state.is_game_over()
+               && x > SIZE as i32 + 50
+               && x < SIZE as i32 + 150
+               && y > 400
+               && y < 440 {
+               game_state.reset();
+               draw(&context, SIZE as f64, &game_state);
+               continue;
+            }
+
             // if the user clicks the 'pass' button
             if game_state.get_all_lines().is_empty()
                && x > SIZE as i32 + 50
