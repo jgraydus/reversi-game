@@ -5,28 +5,22 @@
   "scripts": {
     "build": "rimraf dist pkg && webpack",
     "start": "rimraf dist pkg && webpack-dev-server --open -d",
-    "prepare": "rimraf dist pkg && cargo build && wasm-pack build --release --no-pack && rimraf dist && mv pkg dist",
+    "prepare": "npm run build",
     "test": "cargo test && wasm-pack test --headless"
   },
   "files": [
-    "dist/reversi_game_bg.wasm",
-    "dist/reversi_game.js",
-    "dist/reversi_game_bg.js",
-    "dist/reversi_game.d.ts"
+    "dist/1.js",
+    "dist/2.js",
+    "dist/index.js"
   ],
-  "module": "reversi_game.js",
-  "types": "reversi_game.d.ts",
-  "sideEffects": [
-    "./reversi_game.js",
-    "./snippets/*"
-  ],
+  "module": "dist/index.js",
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.1.0",
+    "arraybuffer-loader": "^1.0.8",
     "copy-webpack-plugin": "^5.0.3",
+    "rimraf": "^3.0.0",
     "webpack": "^4.42.0",
     "webpack-cli": "^3.3.3",
-    "webpack-dev-server": "^3.7.1",
-    "rimraf": "^3.0.0"
+    "webpack-dev-server": "^3.7.1"
   }
 }
-
