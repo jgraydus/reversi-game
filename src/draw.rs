@@ -106,9 +106,9 @@ fn draw_side_panel(context: &web_sys::CanvasRenderingContext2d,
         context.set_font("24pt sans-serif");
         context.set_fill_style(&JsValue::from_str("black"));
         if game_state.get_current_player() == Color::Black {
-            context.fill_text("BLACK's turn", size+10.0, 125.0).unwrap();
+            context.fill_text("BLACK's turn", size+5.0, 125.0).unwrap();
         } else {
-            context.fill_text("WHITE's turn", size+10.0, 125.0).unwrap();
+            context.fill_text("WHITE's turn", size+5.0, 125.0).unwrap();
         }
 
         if game_state.get_all_lines().is_empty() {
