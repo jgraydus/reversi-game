@@ -1,1 +1,3 @@
-import("../pkg/index.js").catch(console.error);
+import("../pkg/index.js").then(x => {
+    x.run()
+}).catch(console.error);

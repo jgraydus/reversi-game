@@ -24,8 +24,8 @@ fn get_canvas() -> web_sys::HtmlCanvasElement {
     canvas
 }
 
-#[wasm_bindgen(start)]
-pub fn main_js() -> Result<(), JsValue> {
+#[wasm_bindgen]
+pub fn run() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
 
     wasm_bindgen_futures::spawn_local(async move {
