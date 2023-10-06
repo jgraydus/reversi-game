@@ -8,12 +8,6 @@
     "prepare": "npm run build",
     "test": "cargo test && wasm-pack test --headless"
   },
-  "files": [
-    "dist/1.js",
-    "dist/2.js",
-    "dist/index.js"
-  ],
-  "module": "dist/index.js",
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.1.0",
     "arraybuffer-loader": "^1.0.8",
