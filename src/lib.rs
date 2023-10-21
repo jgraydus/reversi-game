@@ -1,15 +1,24 @@
-use futures::channel::mpsc::channel;
+use futures::channel::mpsc::{channel, Receiver};
 use futures::stream::StreamExt;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures;
 use web_sys;
 
+// make printing a console log move convenient
+macro_rules! log {
+  ( $( $t:tt )* ) => {
+    web_sys::console::log_1(&format!( $( $t )* ).into());
+  }
+}
+
 mod draw;
 use draw::*;
 
 mod state;
 use state::*;
+
+mod ai;
 
 const SIZE: u32 = 600;
 
@@ -41,9 +50,6 @@ pub fn run() -> Result<(), JsValue> {
    
         // set up the initial game state 
         let mut game_state = GameState::new();
-   
-        // do the initial draw
-        draw(&context, SIZE as f64, &game_state);
     
         // channel to pass click events
         let (mut s, mut r) = channel::<(i32,i32)>(10);
@@ -56,47 +62,69 @@ pub fn run() -> Result<(), JsValue> {
         canvas.set_onclick(Some(click_handler.as_ref().unchecked_ref()));
         click_handler.forget();
 
-        // process each received click
-        while let Some((x, y)) = r.next().await {
-            // if the user clicks the 'reset' button
-            if game_state.is_game_over()
-               && x > SIZE as i32 + 50
+        // run the game
+        loop {
+          draw(&context, SIZE as f64, &game_state);
+          while !do_next_turn(&mut game_state, &mut r).await {
+            draw(&context, SIZE as f64, &game_state);
+          }
+          draw(&context, SIZE as f64, &game_state);
+          // wait for user to click 'reset'
+          while let Some((x, y)) = r.next().await {
+            if    x > SIZE as i32 + 50
                && x < SIZE as i32 + 150
                && y > 400
                && y < 440 {
                game_state.reset();
-               draw(&context, SIZE as f64, &game_state);
-               continue;
+               break;
             }
-
-            // if the user clicks the 'pass' button
-            if game_state.get_all_lines().is_empty()
-               && x > SIZE as i32 + 50
-               && x < SIZE as i32 + 150
-               && y > 400
-               && y < 440 {
-                apply(&mut game_state, None);
-                draw(&context, SIZE as f64, &game_state);
-                continue;
-            }
-
-            // if the click is not on the board
-            if x > SIZE as i32 {
-                continue;
-            }
-
-            // convert the clicked position into the board square coord
-            let pos = Pos {
-                row: (y as f64 / SIZE as f64 * 8.0).floor() as usize,
-                col: (x as f64 / SIZE as f64 * 8.0).floor() as usize,
-            };
-
-            if let Some(_) = apply(&mut game_state, Some(pos)) {
-                draw(&context, SIZE as f64, &game_state);
-            }
+          }
         }
     });
 
     Ok(())
 }
 
+async fn do_next_turn(
+  game_state: &mut GameState,
+  r: &mut Receiver<(i32, i32)>
+) -> bool {
+  if game_state.get_current_player() == state::Color::White {
+    let (p, _) = ai::minimax(&game_state, 3, true, state::Color::White);
+    apply(game_state, p);
+  } else {
+    // process each received click
+    while let Some((x, y)) = r.next().await {
+      // if the user clicks the 'reset' button
+      if game_state.is_game_over()
+         && x > SIZE as i32 + 50
+         && x < SIZE as i32 + 150
+         && y > 400
+         && y < 440 {
+         game_state.reset();
+         break;
+      }
+      // if the user clicks the 'pass' button
+      if game_state.get_all_lines().is_empty()
+         && x > SIZE as i32 + 50
+         && x < SIZE as i32 + 150
+         && y > 400
+         && y < 440 {
+          apply(game_state, None);
+          break;
+      }
+      // if the click is not on the board
+      if x > SIZE as i32 {
+          continue;
+      }
+      // convert the clicked position into the board square coord
+      let pos = Pos {
+          row: (y as f64 / SIZE as f64 * 8.0).floor() as usize,
+          col: (x as f64 / SIZE as f64 * 8.0).floor() as usize,
+      };
+      apply(game_state, Some(pos));
+      break;
+    }
+  }
+  game_state.is_game_over()
+}

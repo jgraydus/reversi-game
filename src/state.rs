@@ -17,7 +17,7 @@ impl Color {
 pub struct GameState {
     positions: [Color; 64],
     current_player: Color,
-    all_lines: HashMap<Pos, Vec<Vec<Pos>>>,
+    pub all_lines: HashMap<Pos, Vec<Vec<Pos>>>,
     passes: usize,
 }
 

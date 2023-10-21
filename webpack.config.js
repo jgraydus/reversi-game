@@ -25,13 +25,5 @@ module.exports = {
       crateDirectory: __dirname,
     }),
   ],
-module: {
-  rules: [
-    {
-      test: /\.wasm$/,
-      type: 'javascript/auto',
-      loaders: ['arraybuffer-loader'],
-    },
-  ],
-},
-};
+}
+
