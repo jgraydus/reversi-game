@@ -20,25 +20,17 @@ pub fn draw(
 fn clear(context: &web_sys::CanvasRenderingContext2d, size: f64) {
     context.begin_path();
     context.set_fill_style(&JsValue::from_str("white"));
-    context.move_to(0.0, 0.0);
-    context.line_to(size + 200.0, 0.0);
-    context.line_to(size + 200.0, size);
-    context.line_to(0.0, size);
-    context.line_to(0.0, 0.0);
+    context.rect(0.0, 0.0, size + 200.0, size);
     context.fill();
 }
 
-fn draw_game_board(context: &web_sys::CanvasRenderingContext2d, size: f64) {
+pub fn draw_game_board(context: &web_sys::CanvasRenderingContext2d, size: f64) {
     // draw green background
     context.begin_path();
     context.set_line_width(3.0);
     context.set_stroke_style(&JsValue::from_str("black"));
     context.set_fill_style(&JsValue::from_str("green"));
-    context.move_to(1.0, 1.0);
-    context.line_to(size-1.0, 1.0);
-    context.line_to(size+1.0, size-1.0);
-    context.line_to(1.0, size-1.0);
-    context.line_to(1.0, 1.0);
+    context.rect(1.0, 1.0, size-2.0, size-2.0);
     context.fill();
 
     // draw the grid lines
@@ -145,11 +137,7 @@ fn draw_game_over(context: &web_sys::CanvasRenderingContext2d,
     context.begin_path();
     let x = size+50.0;
     let y = 400.0;
-    context.move_to(x,y);
-    context.line_to(x,y+40.0);
-    context.line_to(x+100.0,y+40.0);
-    context.line_to(x+100.0,y);
-    context.line_to(x,y);
+    context.rect(x, y, 100.0, 40.0);
     context.set_fill_style(&JsValue::from_str("red"));
     context.fill();
     context.stroke();
@@ -165,16 +153,55 @@ fn render_pass_button(
     context.begin_path();
     let x = size+50.0;
     let y = 400.0;
-    context.move_to(x,y);
-    context.line_to(x,y+40.0);
-    context.line_to(x+100.0,y+40.0);
-    context.line_to(x+100.0,y);
-    context.line_to(x,y);
+    context.rect(x, y, 100.0, 40.0);
     context.set_fill_style(&JsValue::from_str("red"));
     context.fill();
     context.stroke();
     context.set_font("20pt sans-serif");
     context.set_fill_style(&JsValue::from_str("black"));
     context.fill_text("PASS", x+15.0, y+30.0).unwrap();
+}
+
+pub fn draw_color_chooser(
+  context: &web_sys::CanvasRenderingContext2d,
+  size: f64
+) {
+  let x1 = size / 2.0 - 100.0;
+  let y1 = size / 2.0 - 100.0;
+
+  context.set_line_width(3.0);
+  context.set_stroke_style(&JsValue::from_str("black"));
+  context.set_fill_style(&JsValue::from_str("white"));
+
+  context.begin_path();
+  context.rect(x1, y1, 200.0, 200.0);
+  context.fill();
+  context.stroke();
+
+  context.set_fill_style(&JsValue::from_str("black"));
+  context.set_font("24pt sans-serif");
+  context.fill_text("choose color", x1+8.0, y1+50.0).unwrap();
+
+  context.set_line_width(1.0);
+
+  context.begin_path();
+  context.rect(x1+20.0, y1+80.0, 160.0, 40.0);
+  context.set_fill_style(&JsValue::from_str("black"));
+  context.fill();
+  context.set_stroke_style(&JsValue::from_str("white"));
+  context.stroke();
+  context.set_fill_style(&JsValue::from_str("white"));
+  context.set_font("24pt sans-serif");
+  context.fill_text("BLACK", x1+46.0, y1+112.0).unwrap();
+
+  context.begin_path();
+  context.rect(x1+20.0, y1+140.0, 160.0, 40.0);
+  context.set_fill_style(&JsValue::from_str("white"));
+  context.fill();
+  context.set_stroke_style(&JsValue::from_str("black"));
+  context.stroke();
+  context.set_fill_style(&JsValue::from_str("black"));
+  context.set_font("24pt sans-serif");
+  context.fill_text("WHITE", x1+46.0, y1+172.0).unwrap();
 }
 

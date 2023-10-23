@@ -39,21 +39,22 @@ pub fn run() -> Result<(), JsValue> {
 
     wasm_bindgen_futures::spawn_local(async move {
         // get the canvas and ensure it's the correct size
-        let canvas = get_canvas(); 
+        let canvas = get_canvas();
         canvas.set_height(SIZE);
-        canvas.set_width(SIZE + 200); 
-   
-        // get the rendering context 
+        canvas.set_width(SIZE + 200);
+
+        // get the rendering context
         let context = canvas
             .get_context("2d").unwrap().unwrap()
             .dyn_into::<web_sys::CanvasRenderingContext2d>().unwrap();
-   
-        // set up the initial game state 
+
+        // set up the initial game state
         let mut game_state = GameState::new();
-    
+        let mut human_player = state::Color::Black;
+
         // channel to pass click events
         let (mut s, mut r) = channel::<(i32,i32)>(10);
-   
+
         // when the user clicks the canvas, send the location into the channel
         let click_handler: Closure<dyn FnMut(web_sys::PointerEvent)>
           = Closure::new(move |evt: web_sys::PointerEvent| {
@@ -64,11 +65,32 @@ pub fn run() -> Result<(), JsValue> {
 
         // run the game
         loop {
+          // choose color
+          draw_game_board(&context, SIZE as f64);
+          draw_color_chooser(&context, SIZE as f64);
+
+          let x1 = (SIZE / 2 - 100) as f64;
+          let y1 = (SIZE / 2 - 100) as f64;
+
+          while let Some((x, y)) = r.next().await {
+            let (x, y) = (x as f64, y as f64);
+            if x > x1+20.0 && x < x1+180.0 && y > y1+80.0 && y < y1+120.0 {
+              human_player = state::Color::Black;
+              break;
+            }
+            if x > x1+20.0 && x < x1+180.0 && y > y1+140.0 && y < y1+180.0 {
+              human_player = state::Color::White;
+              break;
+            }
+          }
+
+          // play!
           draw(&context, SIZE as f64, &game_state);
-          while !do_next_turn(&mut game_state, &mut r).await {
+          while !do_next_turn(&mut game_state, human_player, &mut r).await {
             draw(&context, SIZE as f64, &game_state);
           }
           draw(&context, SIZE as f64, &game_state);
+
           // wait for user to click 'reset'
           while let Some((x, y)) = r.next().await {
             if    x > SIZE as i32 + 50
@@ -87,9 +109,10 @@ pub fn run() -> Result<(), JsValue> {
 
 async fn do_next_turn(
   game_state: &mut GameState,
+  human_player: state::Color,
   r: &mut Receiver<(i32, i32)>
 ) -> bool {
-  if game_state.get_current_player() == state::Color::White {
+  if game_state.get_current_player() != human_player {
     let (p, _) = ai::minimax(&game_state, 3, true, state::Color::White);
     apply(game_state, p);
   } else {
